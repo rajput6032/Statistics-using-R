@@ -1,0 +1,200 @@
+---
+title: "Chapter 4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(knitr)
+library(plyr)
+library(qcc)
+library(zoo)
+EPAGAS <- read_csv("C:/Users/mgreer/Dropbox/Mark/UNA/Courses/MA345 - Applied Statistics/Datasets/CSV/Examples/EPAGAS.CSV")
+Finch_By_Year_Data <- read_csv("C:/Users/mgreer/Dropbox/Mark/UNA/Courses/MA345 - Applied Statistics/Datasets/Hawkes DataSets/Finch_By_Year_Data.csv")
+```
+
+## Measure of Location
+Given a quantitative data set, we want a good candidate to represent the data.  Below are several examples that are normally choosen
+
+  * **mean** average data $\dfrac{\sum x_i}{n}$
+    + $\stackrel{-}{x}$ sample mean
+    + $\mu$ population mean
+  * **weighted mean** $\dfrac{\sum w_ix_i}{\sum w_i}$
+  * **trimmed mean** modification to the mean by ignoring a certain percentage of the highest and lowest data values.
+  * **median** the middle value
+  * **mode** the value that occurs the most (might be multiple)
+  
+
+```{r include=FALSE}
+gas.mpg<-EPAGAS$MPG
+```
+
+```{r}
+mean(gas.mpg)
+mean(gas.mpg, trim = .2)
+median(gas.mpg)
+```
+
+For the weighted mean, consider a GPA calculation (4.0 scale) with letter grades B, A, C, A and credits $\{3, 4, 5, 3\}$ respectively.
+
+```{r}
+grades<-c(3,4,2,4)
+grades.weight<-c(3,4,5,3)
+weighted.mean(grades,grades.weight)
+```
+
+### Relationship between the Mean, Median, and Mode
+Usually the shape of the data determines how the mean, median, and mode are related.  Data can be skewed as
+
+  * **right or positive skewed** mean falls to the right of the median and mode falls to the left
+  * **left or negative skewed** mean false to the left of the median and mode falls to the right
+  * **symmetric skewed** mean, median, and mode are all the same
+
+### Time Series 
+For time series data, often looking at consecutative data points is helpful rather than an overall calculation
+
+  * **moving average** mean over a certain time frame (using the library *zoo*).
+  
+```{r}
+beak.length <- Finch_By_Year_Data$`Beak length`[Finch_By_Year_Data$Species == "fortis"]
+mean(beak.length)
+rollmean(beak.length, 2)
+```
+
+```{r}
+ts_example<-ts(Finch_By_Year_Data$`Beak length`[Finch_By_Year_Data$Species == "fortis"], frequency = 1, start = c(1973,1))
+plot.ts(ts_example)
+plot(beak.length)
+lines(rollmean(beak.length,2), col = c("red"))
+lines(rollmean(beak.length,3), col = c("blue"))
+```
+
+## Measure of Dispersion
+Given a quantitative data set, we want to know the spread of data.  Below are several examples that are normally choosen.
+
+  * **range** the difference between the largest and smallest data values.
+  * **Mean Absolute Deviation (MAD)** $\dfrac{\sum |x_i - \stackrel{-}{x}|}{n}$
+  * **variance** average squared distance from the mean $\dfrac{\sum(x-\stackrel{-}{x})^{2}}{n-1}$
+    + $s^2$ sample variance
+    + $\sigma^2$ population variance (divide by $N$ not $N-1$)
+  * **standard deviation** square root of the variance $\sqrt{\sigma^{2}}$ or $\sqrt{s^2}$
+    + $s$ sample standard deviation
+    + $\sigma$ population standard deviation
+  
+```{r}
+range(gas.mpg)
+range(gas.mpg)[2]-range(gas.mpg)[1]
+mad(gas.mpg)
+var(gas.mpg)
+sd(gas.mpg)
+```
+
+### Emperical Rule
+Using the standard deviation, we can easily estimate where the data falls.  If the data is *symmetic*
+
+  * $68\%$ of the data falls within 1 standard deviation away from the mean
+  * $95\%$ of the data falls within 2 standard deviation away from the mean
+  * $99.7\%$ of the data falls within 3 standard deviation away from the mean
+  
+```{r echo=FALSE}
+cord.x1 <- c(-1,seq(-1,1,0.01),1) 
+cord.y1 <- c(0,dnorm(seq(-1,1,0.01)),0) 
+
+cord.x2a <- c(-2,seq(-2,-1,0.01),-1) 
+cord.y2a <- c(0,dnorm(seq(-2,-1,0.01)),0) 
+cord.x2b <- c(1,seq(1,2,0.01),2) 
+cord.y2b <- c(0,dnorm(seq(1,2,0.01)),0) 
+
+cord.x3a <- c(-3,seq(-3,-2,0.01),-2) 
+cord.y3a <- c(0,dnorm(seq(-3,-2,0.01)),0) 
+cord.x3b <- c(2,seq(2,3,0.01),3) 
+cord.y3b <- c(0,dnorm(seq(2,3,0.01)),0) 
+
+curve(dnorm(x,0,1), xlim=c(-3,3), main='Standard Normal') 
+ 
+polygon(cord.x1,cord.y1,col='green')
+polygon(cord.x2a,cord.y2a,col='red')
+polygon(cord.x2b,cord.y2b,col='red')
+
+polygon(cord.x3a,cord.y3a,col='blue')
+polygon(cord.x3b,cord.y3b,col='blue')
+```
+  
+### Chebyshev's Theorem
+
+If the data is skewed, or we don't know if it's symmetric, then we can use **Chebyshev's Rule/Theorem**
+
+  * at least $1-\dfrac{1}{k^2}$ of the data falls within $k$ standard deviations away from the mean ($k>1$)
+  
+### Coefficient of Variation
+It is often useful to compare variation between two or more data sets.  The **coefficient of variation** acheives this in a standard way, by dividing by the mean.  The main advantage to the $CV$ is that it is unitless, so it can be compared to each other that others measures can't be (*e.g.* standard deviation, etc.)
+
+  * **coefficient of variation** Population $CV = \left( \frac{\sigma}{\mu}\cdot 100\right)\%$ or Sample $\left( \frac{s}{\stackrel{-}{x}}\cdot 100\right)\%$
+  
+```{r}
+sd(gas.mpg)/mean(gas.mpg)*100
+```
+  
+## Percentiles and Quartiles
+The **p^th^ percentile** is the value such that $p\%$ of the measurements fall below that value and $(1-p)\%$ falls above that value.  **Quartiles** are simply the $25\%,50\%,75\%$ percentiles ($Q_1, Q_2, Q_3$).
+
+```{r}
+quantile(gas.mpg,c(.05,.35,.76,.89))
+quantile(gas.mpg)
+```
+
+The difference between $Q_3$ and $Q_1$ (i.e. where $50\%$ of the data lives) quartiles is called the $IQR$.
+
+```{r}
+IQR<-quantile(gas.mpg)[4]-quantile(gas.mpg)[2]
+```
+
+##Box and Whisker Plots
+Box and Whisker plots are also used to find outliers.  It is created by using the median of a data set, with the box being made with the $25\%$ and $75\%$ percentiles.  The whiskers are made by subtracting $1.5*IQR$ to the $25\%$ percentile and adding $1.5*IQR$ to the $75\%$ percentile.  Values falling above and below these whiskers are usually seen to be outliers.
+
+```{r}
+boxplot(gas.mpg,horizontal = T)
+summary(fivenum(gas.mpg))
+```
+
+```{r}
+IQR<-quantile(gas.mpg)[4]-quantile(gas.mpg)[2]
+lbs<-c(quantile(gas.mpg)[2]-1.5*IQR,quantile(gas.mpg)[2],median(gas.mpg),quantile(gas.mpg)[4],quantile(gas.mpg)[4]+1.5*IQR)
+boxplot(gas.mpg,horizontal = T)
+text(lbs,labels=lbs,y = 1.25)
+```
+
+The following gives the information above as well as a nice way to view the outliers.
+
+```{r}
+boxplot.stats(gas.mpg)
+boxplot(gas.mpg,horizontal = T)
+lbs<-boxplot.stats(gas.mpg)$stats
+text(lbs,labels=lbs, y = 1.25)
+```
+
+Again, you can see above that we have two suspected outliers.
+
+## Z-Scores
+Comparing data sets or individual data can be done using **z-scores**.  Z-scores scale the data set so that the spread is the same, but the mean and standard deviation are set to 0 and 1 respectively.  In this setting, data sets with different means and standard deviations can be compared objectively.  The formula is
+
+  * **z-score of a sample** $\dfrac{x-\stackrel{-}{x}}{s}$
+  * **z-score of a population** $\dfrac{x-\mu}{\sigma}$
+  
+```{r}
+scale(gas.mpg)
+min(scale(gas.mpg))
+max(scale(gas.mpg))
+mean(scale(gas.mpg))
+sd(scale(gas.mpg))
+```
+
+Z-scores can also tell use about outliers.  Usually, if the z-score is close/below -3 or close/above 3, then we usually assume that value is an outlier.  You can see we have two values that we would usually assume are outliers.
+
+## Proportions and Percentages
+A **proportion** is the measure that a fraction of a group possesses some characteristic.
+
+  * $X =$ the number that possess the characteristic
+  * $N =$ the number in the population (or sample)
+  * $p = \frac{X}{N}$ the population proportion
+  * $\hat{p} = \frac{X}{n}$ the sample proportion

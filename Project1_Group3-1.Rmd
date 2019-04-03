@@ -1,0 +1,110 @@
+---
+title: "Project 1, Group 3"
+names: Christopher Winton, Surya Singh, Joseph Hughes, Kolby Thrasher, Ethan Sutherland
+output: html_document
+---
+
+####Group 3: Christopher Winton, Surya Singh, Joseph Hughes, Kolby Thrasher, Ethan Sutherland
+
+### Introduction
+
+  The data being analyzed is financial stock data for the DalTile location in Sunnyvale, TX and it was obtained in June of 2017. This data was obtained by Joseph Hughes from the company's SAP software. Joseph was given permission to use this data in a non-commercial setting by his former supervisor Roy Huffman who is the Maintenance and Engineering Supervisor of this plant location.
+
+```{r setup, include=FALSE}
+library(readr)
+library(knitr)
+library(plyr)
+library(qcc)
+library(zoo)
+x<-read.csv("/home/surya/Downloads/Data Trimmed-2.csv")
+```
+
+
+
+```{r, include=F}
+dept<-x$Department
+countDept<-count(dept)
+countDept<-countDept[-c(34),]
+countDept.relfreq<-countDept$freq/sum(countDept$freq)
+countDept.relfreq<-round(countDept.relfreq,4)
+countDept.cumfreq<-cumsum(countDept$freq)
+countDept.cumrelfreq<-cumsum(countDept.relfreq)
+countDept.cumrelfreq<-round(countDept.cumrelfreq,3)
+Depts<-data.frame("Names" = countDept$x, "Frequency" = countDept$freq)
+Depts<-cbind(Depts, "Cumulative Frequency" = countDept.cumfreq)
+Depts<-cbind(Depts, "Relative Frequency" = countDept.relfreq)
+Depts<-cbind(Depts, "Cumulative Relative Frequency" = countDept.cumrelfreq)
+```
+
+### Quatlitative Data Question 1
+
+```{r}
+kable(Depts)
+```
+
+#### Discussion
+In this table we have calculated Frequency,cumulative frequency, relative frequency and cumulative relative frequency from the column department of the data.
+
+### Quatlitative Data Question 2
+
+```{r}
+barplot(horiz = T, countDept$freq, names.arg = countDept$x, las = 2, cex.axis = 1, cex.names = 0.5, col = c("blue"))
+```
+
+#### Discussion
+
+We have created a barplot from the column department of data which shows the purchases every department did. With this barplot we can see which department has purchased maximum products and which department did minimum purchases. We used the barplot because we had total of 33 departments and if we have created a pie chart than it would have been really messy.
+
+
+```{r, include=F}
+val<-x$Value.Unrestricted
+val<-subset(val, val < 5000 & val > 1000)
+Mean<-mean(val)
+Mean<-round(Mean,2)
+Median<-median(val)
+Median<-round(Median,2)
+MAD<-mad(val)
+MAD<-round(MAD,2)
+Variance<-var(val)
+Variance<-round(Variance,2)
+SD<-sd(val)
+SD<-round(SD,2)
+valTable<-data.frame("Mean" = Mean, "Median" = Median, "MAD" = MAD, "Variance" = Variance)
+valTable<-cbind(valTable, "Standard Deviation" = SD)
+```
+
+### Quantitative Data Question 1
+
+```{r}
+kable(valTable)
+```
+
+#### Discussion
+
+### Quantitative Data Question 2
+
+```{r}
+hist(val)
+```
+
+
+
+### Quantitative Data Question 3
+
+```{r}
+boxplot(val,horizontal = T)
+lbs<-boxplot.stats(val)$stats
+text(lbs,labels=lbs, y = 1.25, cex = 0.55)
+```
+
+#### Discussion
+
+
+### Questions
+1. Which department spends the most money on spare parts?
+
+2. Which department is the most cost-effective?
+
+3. Which department most-frequently purchases spare parts?
+
+### Hypothesis

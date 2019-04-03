@@ -1,0 +1,224 @@
+---
+title: "Chapter 5"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(knitr)
+FIREDAM <- read_csv("/home/surya/Downloads/FIREDAM.CSV")
+```
+#Simple Linear Regression
+For this Chapter, our goal is to determine a simple *straight line model* relating a populating mean to another variable.
+
+##Probabilistic Models
+Overall, we would want a **deterministic model**, where we can perfectly predict $y$ in terms of $x$.  In general, we can't be exact, so we construct a **probabilistic model**, where 
+
+<center>
+$y=$ Deterministic + Random error
+</center>
+
+We use **regression modeling**, where we have
+
+<center>
+$y=\beta_0+\beta_1 x +\epsilon$
+</center>
+where
+
+  1. $y$ is the **Dependent** or **Response varable**
+  2. $x$ is the **Independent** or **Predictor variable**
+  3. $\beta_0 +\beta_1 x$ Deterministic component
+  4. $\epsilon$ is the Random error (want to be close to zero)
+  5. $\beta_0$ is the **y-intercept**
+  6. $\beta_1$ is the **slope of the line**
+  
+  
+##Fitting the Model: The Least Squares Approach
+
+####Example 1
+Suppose we have 5 subjects, and we keep track of the percentage of a certain drug in the blodstream and the length of time it takes to react to a stimulus.
+
+```{r}
+drug.percent<-c(1,2,3,4,5)
+reaction.time<-c(1,1,2,2,4)
+cbind(drug.percent,reaction.time)
+```
+
+###Scatterplot
+
+```{r}
+plot(x = drug.percent, y = reaction.time)
+plot(reaction.time~drug.percent)
+```
+
+###Correlation
+Since as the drug percentage increases, we have an increase in the reaction time, we expect to see a positive correlation, meaning the reaction time is positively correlated to the drug percentage.
+
+```{r}
+cor(drug.percent, reaction.time)
+```
+
+One the other hand, we could consider the correlation of drug percentage related to the reaction time (which yields the same answer of course!).
+```{r}
+cor(reaction.time, drug.percent)
+```
+
+###Building the Linear Relationship (Regression)
+
+
+Consider the model
+<center>
+$\tilde{y} = -1+x$
+</center>
+
+Why is this a good model for our data?
+
+<center>
+$x$ | $y$ | $\tilde{y} = -1+x$ | $(y-\tilde{y})$ | $(y-\tilde{y})^2$
+---|---|---|---|---
+1|1|0|(1-0)=1| 1
+2|1|1|(1-1)=0|0
+3|2|2|(2-2)=0|0
+4|2|3|(2-3)=-1|1
+5|4|4|(4-4)=0|0
+||||Sum of errors = 0| Sum of squared errors (SSE) = 2
+</center>
+
+```{r}
+plot(reaction.time~drug.percent,xlim=c(0,5),ylim=c(-1,5))
+abline(a=-1,b=1)
+```
+
+
+This model is using the **method of least squares**, which calculates the **least squares prediction equation**
+
+###Properties of $\hat{y}=\hat{\beta}_0+\hat{\beta}_1 x$
+
+  1. The sum of the errors equals 0
+  2. The sum of the squared errors (SSE) is smaller than any other straight line model
+  
+###Formulas fo the Least Squares Estimates
+
+  1. *Slope:* $\hat{\beta}_1 = \dfrac{SS_{xy}}{SS_{xx}}$
+  2. *y-intercept:* $\hat{\beta}_0 = \stackrel{-}{y}-\hat{\beta}_1\stackrel{-}{x}$
+  3. $SS_{xy} = \sum x_iy_i - \dfrac{\sum x_i\sum y_i}{n}$
+  4. $SS_{xx} = \sum x_i^2-\dfrac{(\sum x_i)^2}{n}$
+  
+```{r}
+model1<-lm(reaction.time~drug.percent)
+model1
+```
+
+$x$ | $y$ | $\tilde{y} = -.1+.7x$ | $(y-\tilde{y})$ | $(y-\tilde{y})^2$
+---|---|---|---|---
+1|1|.6|(1-0)=.4| .16
+2|1|1.3|(1-1)=-.3|.09
+3|2|2.0|(2-2)=0|0
+4|2|2.7|(2-3)=-.7|.49
+5|4|3.4|(4-4)=.6|.36
+||||Sum of errors = 0| Sum of squared errors (SSE) = 1.10
+</center>
+
+```{r}
+sum(model1$residuals^2)
+anova(model1)
+```
+
+```{r}
+plot(reaction.time~drug.percent,xlim=c(0,5),ylim=c(-1,5))
+abline(model1)
+```
+
+If we wanted to use our model to test future values, we use the *predict* function as follows.
+
+```{r}
+predict.values<-data.frame(drug.percent = c(8,9,9.5,10))
+predict(model1,newdata = predict.values)
+```
+
+##Model Assumptions
+We have several assumptions for our probability distribution.  
+
+  1. The mean of the probability distribution of $\epsilon$ is 0.
+  2. The variance of the probability distribution of $\epsilon$ is constant for all settings of $x$.
+  3. The probility distribution of $\epsilon$ is normal
+  4. The values of $\epsilon$ associated with any two observed $y$ value are independent.
+  
+###Estimation of $\sigma^2$ for a (First-Order) Straight-Line Model
+We want to find $s$, which will be our **(residual) estimated standard error of the regression model**.  Note that the degrees of freedom for error is $n-2$.
+
+<center>
+$SSE = SS_{yy}-\beta_1SS_{xy}$
+
+$s^2=\dfrac{SSE}{n-2}$
+
+$s = \sqrt{\dfrac{SSE}{n-2}}$
+</center>
+
+We expect most, about 95%, of the observed y values to lie within 2s of their respective least squares predicted values, $\tilde{y}$.
+
+```{r}
+summary(model1)
+```
+So, s = .61.
+
+
+##Coefficeints of correlation and Determination
+We want to describe the relationship between $x$ and $y$, which is a **bivariate relationship**.  Basically, we want to test the **correlation** between the two variables.  Here, we are going to use correlation to measure the linear relationship between $x$ and $y$.  Our two variables of interest are
+
+  * $r$ - coefficient of correlation
+  * $r^2$ - coefficient of determination
+  
+with formulas
+
+
+  1. $r=\dfrac{SS_{xy}}{\sqrt{SS_{xx}SS_{xy}}}$
+  2. $r^2=\dfrac{SS_{yy}-SSE}{SS_{yy}} = 1-\dfrac{SSE}{SS_{yy}} = 1-\dfrac{SSE}{TSS} = \dfrac{SSR}{TSS}$
+  3. TSS = $\sum(y-\stackrel{-}{y})^2$
+  4. SRR = TSS - SSE
+
+Notice that $-1<r<1$ and $0<r^2<1$.  When $r$ is near 0, no there is no relationship between $x$ and $y$.  When $r$ is near $1$, we have a positive correlation, and being near $-1$ gives a negative correlation.  When $r^2=a$, we have that a% of the sample variation of $y$ can be explained by using $x$ to predict $y$ (in our straight-line model).
+
+By hand, we can calculate $r^2$ as follows:
+
+```{r}
+SSE<-sum(summary(model1)$residuals^2)
+TSS<-sum( ((reaction.time) - mean(reaction.time))^2)
+SSR<-TSS-SSE
+SSR/TSS
+```
+
+SSE|TSS|SSR
+---|---|---
+1.1|6|4.9
+
+Or we can use the ouput from the *summary* of our linear model.
+
+```{r}
+summary(model1)$r.squared
+```
+Since $r=.90$ is positive and near 1, we have that the reaction time tends to increase as the drug percent increases.  Also, since $r=.82$, 82% of the sample variation in reaction time ($y$) can be explained by using the percent of the drug ($x$) in a straight line model.
+
+
+####Example 2
+We want to find a relationship between the distance between a burning hourse and the nearest fire station and the amount of fire damage.  We'll set $x$ to be the distance from the fire station and $y$ to be the amount of damage (using FIREDAM data set).  
+
+  1. Find the linear model and estimate your approximation.
+  2. Find $r$ and $r^2$ and interpret.
+
+```{r}
+fire.model<-lm(DAMAGE~DISTANCE,FIREDAM)
+summary(fire.model)
+plot(DAMAGE~DISTANCE,FIREDAM)
+abline(fire.model)
+text(x=5,y=20,label = "y = 10.27 + 4.91x ")
+```
+```{r}
+sum(fire.model$residuals^2)
+summary(fire.model)$sigma
+cor(FIREDAM$DISTANCE,FIREDAM$DAMAGE)
+summary(fire.model)$r.squared
+```
+
+###Summary
+In general, the best-fit line for the damage of the fire given the nearest firestation is $y=10.27+4.91x$.  The standard error is 2.31, meaning that all of our data points fall within $\pm 4.62$ from our line. Our correlation and determination factors are 96% and 92%.  This mean that 96% of the damage is correlated to the distance of the closest fire station and 92% of the damage can be determined by that same distance.  

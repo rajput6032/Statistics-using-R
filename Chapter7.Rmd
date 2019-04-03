@@ -1,0 +1,285 @@
+---
+title: "Chapter 7"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8) 
+```
+#Discrete Random Variables
+
+####Example 1 - Tossing a Coin Twice
+You toss a fair coin twice and you want to keep track of how many heads you see.  Your sample space is then $\{TT,HT,TH,HH\}$.  The probabilities for $0$ heads is $1/4$, $1$ head is $1/2$, and $2$ heads is $1/4$.
+
+```{r}
+coin<-0:2
+p.coin<-c(1/4,1/2,1/4)
+rbind(coin,p.coin)
+```
+
+Here's an example simulating the same experiment $n$ times (for example $n=1000$).
+
+```{r}
+coin.example<-table(sample(coin,size=1000,prob=p.coin,replace=T))
+coin.example
+coin.example/sum(coin.example)
+```
+
+##Expected Value
+The expected value or mean of any discrete random variables is $$E(x)=\mu=\sum xp(x)$$.
+
+Using Example 1
+
+```{r}
+weighted.mean(coin,p.coin)
+```
+
+##Varience and Standard Deviation
+The Variance is $$\sigma^2 = E(x-\mu)^2 = \sum(x-\mu)^2p(x) = \sum x^2p(x)-\mu^2 = \sum x^2p(x)-(\sum xp(x))^2$$.  
+The standard deviation is $$\sigma=\sqrt{\sigma^2}$$
+
+Here are two functions for the variance and standard deviation of a discrete random variable.  Please use these as you need on homework, quests, projections, etc.
+
+```{r}
+weighted.var<-function(x,p.x)
+  weighted.mean(x^2,p.x)-(weighted.mean(x,p.x))^2
+weighted.sd<-function(x,p.x)
+  sqrt(weighted.mean(x^2,p.x)-(weighted.mean(x,p.x))^2)
+```
+
+Using Example 1
+
+```{r}
+weighted.var(coin,p.coin)
+weighted.sd(coin,p.coin)
+```
+
+####Example 2 - Raffle Ticket
+You buy 1 ticket, costing a $1 for a raffle.  There are 3 prizes of $5, 2 prizes of $10, and 1 prize of $25.  Find the expected value if $1000$ tickets were sold.  What is the variance and standard deviation?
+
+```{r}
+raffle<-c(-1,4,9,24)
+p.raffle<-c(994/1000,3/1000,2/1000,1/1000)
+rbind(raffle,p.raffle)
+weighted.mean(raffle,p.raffle)
+weighted.var(raffle,p.raffle)
+weighted.sd(raffle,p.raffle)
+```
+
+Suppose you participating in the same raffle every month for 5 years.  What is your expected earnings?  How does this compare to your previous answer?
+
+```{r}
+simulate.raffle<-table(sample(raffle,size=60,prob=p.raffle,replace=T))
+simulate.raffle
+p.simulate.raffle<-simulate.raffle/sum(simulate.raffle)
+p.simulate.raffle
+weighted.mean(simulate.raffle,p.simulate.raffle)
+earnings<-weighted.mean(simulate.raffle,p.simulate.raffle) - 60
+earnings
+earnings/60
+```
+
+#Discrete Uniform Distribution
+This distribution is one of the simplest distribution.  Every value of the random variable has the same probability.
+
+####Example 3 - Rolling a Die
+Let's construct a probability distribution for rolling a *fair* die.
+
+```{r}
+die<-1:6
+p.die<-rep(1/6,6)
+rbind(die,p.die)
+```
+
+We can calculate the expected outcome (mean), variance, and standard deviation as before:
+
+```{r}
+weighted.mean(die,p.die)
+weighted.var(die,p.die)
+weighted.sd(die,p.die)
+```
+
+#Binomial Distribution
+A Binomial Experiment has 
+
+  * $n$ identical trials
+  * Only two possible outcomes on each trial ($S$-success and $F$-failure)
+  * The probabilities for $S$ and $F$ are the same from trial to trial
+  * Trials are independent
+
+## The Binomial Probability Distribution
+The probability of $x$ success is $$p(x)={{n}\choose{x}}p^xq^{n-x}$$ 
+where
+
+  * $p$ is the probability of $S$
+  * $q$ is the probability of $F$ $(q=1-p)$
+  * $n$ is the number of total trials
+  * $x$ is the number of successes in $n$ trials
+
+####Example 4 - Multiple Choice Test
+Suppose you have to take a 12 question multiple choice test, with each answer having 5 choices.  
+
+Let's make a barchart and table for the binomial probability distribution of how many questions you could get right if you randomly guess.  Both of these are good representations of the distribution.
+
+```{r, options(width = 12)}
+multitest<-(0:12)
+p.multitest<-dbinom(multitest,12,.2)
+rbind(multitest,round(p.multitest*100))
+text(barplot(p.multitest,names=multitest,ylim=c(0,.3)),labels = paste(round(p.multitest*100),"%"),y=p.multitest+.01)
+```
+
+If you guess at random, 
+
+  1. what is the probability of getting exactly 2 questions right?  
+  2. At most 2 questions right?  
+  3. At least 5 questions right?
+
+For #1, since we just want the probability with x being 2, we have
+
+```{r}
+dbinom(2,12,.2)
+```
+
+We have two options for #2 where we are after the probability that $x=\{0,1,2\}$, whether we want to use dbinom or pbinom.
+
+```{r}
+dbinom(0,12,.2)+dbinom(1,12,.2)+dbinom(2,12,.2)
+sum(dbinom(0:2,12,.2))
+pbinom(2,12,.2)
+```
+
+Since we are interested in at least 5 questions right, we are asking about the probability that $x=\{5,6,7,8,9,10,11,12\}$.  So, we can answer that question in the following ways:
+
+```{r}
+sum(dbinom(5:12,12,.2))
+1-pbinom(4,12,.2)
+pbinom(4,12,.2,lower.tail = F)
+```
+
+##Expected Value, Variance, and Standard Deviation for a Binomial Distribution
+The general formulas are the same for the $\mu,\sigma^2,$ and $\sigma$.  However, since we have consistent probabilities with a binomial experiment, we can simplify them quiet nicely!
+
+$$\mu = np$$
+$$\sigma^2=npq$$
+$$\sigma=\sqrt{npq}$$
+
+Using Example 4
+
+```{r}
+12*.2
+12*.2*.8
+sqrt(12*.2*.8)
+```
+
+Using the old functions, we get the same answer!
+
+```{r}
+weighted.mean(multitest,p.multitest)
+weighted.var(multitest,p.multitest)
+weighted.sd(multitest,p.multitest)
+```
+
+#Poisson Random Variable
+Used to describe rare events in a specific time period, area, or volume.  The distribution has the following characteristics:
+
+  * The experiment consists of counting the number of times a certain even occurs
+  * The probability of that event occurring remains the same
+  * The number of events that occur in one unit is independent of other units
+
+We denote the mean or expected value as $\lambda$.  The probability of $x$ occurring is given by $$p(x)=\dfrac{\lambda^{x}e^{-\lambda}}{x!}$$ 
+where
+
+  * $\mu=\lambda=\sigma^2$
+  * $e=2.718282\ldots$ is Euler's constant
+  
+####Example 5
+Assume the average number of blue whale sightings in a week is $2.6$.  
+
+  1. Find the mean, variance, and standard deviation of blue whale sightings per week.
+  2. Find the probability that fewer than two sightings are made during a given week.
+  3. Find the probability that more than five sightings are made during a given week.
+  4. Find the probability that exactly five sightings are made during a given week.
+  
+For #1, we know that $\mu=\sigma^2=2.6$.  So, to find the standard deviation we just calculate $\sigma=\sqrt{2.6}$
+
+```{r}
+sqrt(2.6)
+```
+
+For #2, we have two options, since we are looking for the probability $x=\{0,1\}$.
+
+```{r}
+dpois(0,2.6)+dpois(1,2.6)
+sum(dpois(0:1,2.6))
+ppois(1,2.6)
+```
+
+For #3, we have to some how flip the inequality since we are interested in the probability that $x=\{6,7,8,9,\ldots\}$, which is an infinite set of probabilities we would have to calculate!
+
+```{r}
+1-sum(dpois(0:5,2.6))
+ppois(5,2.6,lower.tail = F)
+```
+
+For #4, we are back to just a single x value.
+
+```{r}
+dpois(5,2.6)
+```
+
+#Hypergeometric Random Variable
+Used to provide a realistic model for certain types of countable data.  The distribution has the following characteristics:
+
+  * The experiment consists of drawing (randomly) $n$ elements without replacement from $N$ elements, where $r$ of the elements are success ($S$) and $N-r$ are failures ($F$)
+  * The variable $x$ is the number of $S's$ in the draw of $n$ elements
+  
+The probability distribution is given by $$p(x)=\dfrac{{{r}\choose{x}}{{N-r}\choose{n-x}}}{{N}\choose{n}}$$ 
+where
+
+  * $N$ is the total number of elements
+  * $n$ is the number of elements drawn 
+  * $r$ is the number of $S's$ in $N$ elements
+  * $x$ is the number of $S's$ drawn in the $n$ elements
+  
+As before, we can find the mean, variance, and standard deviation easily
+
+$$\mu=\dfrac{nr}{N}$$
+$$\sigma^2=\dfrac{r(N-r)n(N-n)}{N^2(N-1)}$$
+$$\sqrt{\sigma^2=\dfrac{r(N-r)n(N-n)}{N^2(N-1)}}$$
+  
+####Example 6
+Suppose were are going to select $3$ people from a total of $10$, where $6$ are male and $4$ are female.  Let $x$ represent the number of females selected.
+
+  1. Find the mean and standard deviation of $x$.
+  2. Find the probability that no females are selected.
+  3. Find the probability that at most 3 females are selected.
+  4. Find the probability that at least 2 females are selected.
+
+For #1 we have
+```{r}
+mean.committee = (3*4)/10
+standard.deviation.committee = sqrt((4*(10-4)*3*(10-3))/(10^2*(10-1)))
+mean.committee
+standard.deviation.committee
+```
+
+For #2, we want the single probability of x being 0.
+
+```{r}
+dhyper(0,4,6,3)
+```
+
+For #3, we want at most 3, so we want the probability that $x=\{0,1,2,3\}$
+
+```{r}
+sum(dhyper(0:3,4,6,3))
+phyper(3,4,6,3)
+```
+
+For #4, we want at least 2 females selected, so we have the probability that $x=\{2,3\}$.
+
+```{r}
+sum(dhyper(2:3,4,6,3))
+1-phyper(1,4,6,3)
+phyper(1,4,6,3,lower.tail=F)
+```

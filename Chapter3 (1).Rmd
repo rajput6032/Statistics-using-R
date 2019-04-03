@@ -1,0 +1,109 @@
+---
+title: "Chapter 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(knitr)
+library(plyr)
+library(qcc)
+APHASIA <- read_csv("C:/Users/mgreer/Dropbox/Mark/UNA/Courses/MA345 - Applied Statistics/Datasets/CSV/Examples/APHASIA.CSV")
+EPAGAS <- read_csv("C:/Users/mgreer/Dropbox/Mark/UNA/Courses/MA345 - Applied Statistics/Datasets/CSV/Examples/EPAGAS.CSV")
+Finch_By_Year_Data <- read_csv("C:/Users/mgreer/Dropbox/Mark/UNA/Courses/MA345 - Applied Statistics/Datasets/Hawkes DataSets/Finch_By_Year_Data.csv")
+```
+
+## Frequency Distributions
+
+Since we can't do "normal" mathematical operations with qualitative data, we focus on classifying the data and visually organizing the data.  We have
+
+  * **classes** categories of the experimental units
+  * **frequency** the number of occurrences in each class
+  * **relative frequency** the frequency divided by the total size of the sample
+  * **cumulative frequency** the sum of the frequency of a particular class and all preceding classes
+  * **cumulative relative frequency** the proportion of observations in a particular class and all preceding classes
+  
+
+
+#### Example 1 
+Using the APHASIA file, will classify first classify the data.  The *count* function comes from the **plyr** library.
+
+```{r}
+c1<-count(APHASIA)
+c1
+data<-c1$freq
+```
+
+Notice that the count function gives the classes and frequencies.  To get the relative , cumulative, and cumulative relative frequency, we compute:
+
+```{r}
+rel.freq = data/sum(data)
+rel.freq = round(rel.freq,2)
+cum.freq = cumsum(data)
+cum.rel.freq = cumsum(rel.freq)
+rel.freq
+cum.freq
+cum.rel.freq
+```
+
+Now we'll constuct a table using the *kable* function in the **knitr** library.
+
+```{r}
+mytable<-data.frame("Names" = c1$TYPE, "Frequency" = data)
+kable(mytable)
+```
+
+To add the other columns (for example), use the *cbind* function.
+
+```{r}
+mytable<-cbind(mytable,"Cumulative Frequency" = cum.freq, "Relative Frequency" = rel.freq, "Cumulative Relative Frequency" = cum.rel.freq)
+kable(mytable)
+```
+
+## Displaying Qualitative Data Graphically (Bar Plots, Pie Graphs, and Pareto Diagrams)
+
+Below are the commands to constuction different types of charts for our data.  Please utilize the manual, internet, etc. to find ways to change and improve these to your liking.
+
+```{r}
+barplot(data, names.arg = c1$TYPE)
+pie(data,labels = paste(c1$TYPE,rel.freq *100,"%"))
+```
+
+For a pareto diagram, we'll use the *pareto.chart* function from the **qcc** library.
+
+```{r}
+names(data)<-c1$TYPE
+pareto.chart(data)
+```
+## Histograms and Other Graphical Displays of Quantitative Data
+We can also visual quantitative data.  Frequency tables are made the same was as before, except now we must make classes as intervals for our data (not *named* classes as with quantitative).
+
+#### Example 2
+Using the EPAGAS file
+
+```{r}
+gas.mpg<-EPAGAS$MPG
+breaks<-seq(30,45,1)
+Classes<-cut(gas.mpg,breaks,right=F)
+mytable2<-data.frame(table(Classes))
+kable(mytable2)
+```
+
+We can add other colums as before.  Now we show several functions for visualizing quantitative data.
+
+
+```{r}
+dotchart(table(Classes))
+stem(gas.mpg,scale=2)
+hist(gas.mpg,breaks=14)
+hist(gas.mpg,breaks=14,prob=T)
+lines(density(gas.mpg))
+```
+
+#### Example 3
+Finally we have a time series graph.
+
+```{r}
+ts_example<-ts(Finch_By_Year_Data$`Beak length`[Finch_By_Year_Data$Species == "fortis"], frequency = 1, start = c(1973,1))
+plot.ts(ts_example)
+```
